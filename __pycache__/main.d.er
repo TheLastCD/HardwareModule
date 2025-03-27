@@ -1,0 +1,33 @@
+##[pylyzer] failed /users/charlie/git/hardwaremodule/main.py 1743070040 793
+.___v_desugar_1: Never
+.Enum: Never
+.SensorType: ClassType
+.SensorType <: Never
+.SensorType.DIGI: {0}
+.SensorType.ANA: {1}
+
+.IO: ClassType
+.IO <: Never
+.IO.INP: {0}
+.IO.OUT: {1}
+
+.Sensors: ClassType
+.Sensors.sensorType: Never
+.Sensors.IO: Never
+.Sensors.channel: Never
+.Sensors.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.Sensors
+.Sensors.returnChannel: (self: main.Sensors) -> Never
+.Sensors.returnIO: (self: main.Sensors) -> Never
+.Sensors.returnSensorType: (self: main.Sensors) -> {main.SensorType}
+
+.SensorInput: ClassType
+main = pyimport "main"
+.SensorInput <: .Sensors
+.SensorInput.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.SensorInput
+
+.SensorOutput: ClassType
+.SensorOutput <: .Sensors
+.SensorOutput.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.SensorOutput
+
+.x: .SensorInput
+
