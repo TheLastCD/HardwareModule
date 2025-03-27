@@ -1,0 +1,18 @@
+where to instantiate sensors:
+	1. define outside and pass in
+	2. pass in data and instantiate from there
+	3. hardcode it into the module class
+
+
+	1 wastes memory and is not OOP
+	3 is terrible, what if different modules etc
+	2 is best :)
+
+
+how to implement?
+	__init__(self, array of sensor config?)
+
+	__init__(self, anaConfigArray, digiConfigArray)
+
+
+	
