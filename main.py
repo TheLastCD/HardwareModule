@@ -149,6 +149,7 @@ class Module():
 
     def __init__(self, sensorDict):
         self.sensors = self.SensorFactory(sensorDict)
+        self.powerState = 0  # is the controller powered on
 
     def sendEvent(self, sensor, msg):
         """
@@ -166,7 +167,7 @@ class Module():
             args:
                 inp: the command received to act on
         """
-        pattern = r'^\^.*\n$'  # simple regex to filter out incorrect commands
+        pattern = r'^\^.*\n$'  # simple regex to filter out incorrect commands only covers the ^ and \n
 
         if re.fullmatch(pattern, inp):
             # due to arbirary size of Sequence number we struggle to do proper slicing by index
@@ -175,8 +176,9 @@ class Module():
             # as the regex filters out an missing ^ i can ignore it when slicing
             opcode = inp[1]
             seqNum = inpSplit[1]
+            if opcode == ProtocolCommands.PUS:
 
-            # process and slice the incoming sensor command into output type and channel
+                # process and slice the incoming sensor command into output type and channel
             sensorType = inpSplit[2][0]
             sensorDirection = inpSplit[2][1]
             sensorChannel = inpSplit[2][2:]
