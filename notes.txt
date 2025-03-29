@@ -14,5 +14,8 @@ how to implement?
 
 	__init__(self, anaConfigArray, digiConfigArray)
 
-
+Challenges:
+	it's hard when you don't have the specific unit to work with
+	the hardware informs your software and it's very useful to be able to prod it
+	also the physical hardware is good for orienting yourself, conflating ana out with an ana sensor for instance
 	

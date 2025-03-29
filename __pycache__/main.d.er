@@ -1,4 +1,6 @@
-##[pylyzer] failed /users/charlie/git/hardwaremodule/main.py 1743070040 793
+##[pylyzer] failed /users/charlie/git/hardwaremodule/main.py 1743241867 2963
+.re: Never
+
 .___v_desugar_1: Never
 .Enum: Never
 .SensorType: ClassType
@@ -10,6 +12,20 @@
 .IO <: Never
 .IO.INP: {0}
 .IO.OUT: {1}
+
+.ProtocolCommands: ClassType
+.ProtocolCommands <: Never
+.ProtocolCommands.ECHO: {"E"}
+.ProtocolCommands.INPUT: {"I"}
+.ProtocolCommands.OUTPUT: {"O"}
+.ProtocolCommands.PUS: {"P"}
+
+.ProtocolReturnCode: ClassType
+.ProtocolReturnCode <: Never
+.ProtocolReturnCode.OK: {"OK_"}
+.ProtocolReturnCode.ERROR: {"ERR"}
+.ProtocolReturnCode.RANGE: {"RNG"}
+
 
 .Sensors: ClassType
 .Sensors.sensorType: Never
@@ -24,10 +40,22 @@
 main = pyimport "main"
 .SensorInput <: .Sensors
 .SensorInput.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.SensorInput
+.SensorInput.returnSensorState: (self: main.SensorInput) -> NoneType
 
 .SensorOutput: ClassType
 .SensorOutput <: .Sensors
 .SensorOutput.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.SensorOutput
+.SensorOutput.changePsuState: (self: main.SensorOutput, on: Bool) -> NoneType
+.SensorOutput.ReadPowerConsumption: (self: main.SensorOutput) -> NoneType
 
-.x: .SensorInput
+.Module: ClassType
+.Module.__call__: (sensorDict: Obj) -> main.Module
+.Module.SensorFactory: (self: main.Module, Dict: global::Iterable(global::Indexable(Obj, Never))) -> NoneType
+.Module.ResponseGenerator: (self: main.Module) -> NoneType
+
+.sensorDict: global::Dict!({{"Ana0"}: {2}, {"Digi1"}: {1}, {"Digi0"}: {0}, {"Ana1"}: {3}})
+.ProtocolHandler: ClassType
+.ProtocolHandler.__call__: () -> main.ProtocolHandler
+.ProtocolHandler.ReadInput: (self: main.ProtocolHandler) -> Never
+.ProtocolHandler.ProcessInput: (self: main.ProtocolHandler, inp: Obj) -> Never
 
