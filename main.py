@@ -17,8 +17,13 @@ from enum import Enum
 
 
 class SensorType(Enum):
-    DIGI = 0
-    ANA = 1
+    DIGI = "D"
+    ANA = "A"
+
+
+class SensorDirection(Enum):
+    INPUT = "I"
+    OUTPUT = "O"
 
 
 class ProtocolCommands(Enum):
@@ -74,7 +79,7 @@ class Sensors():
         return self.channel
 
     def returnSensorType(self):
-        return SensorType
+        return self.sensorType
 
     def returnSensorState(self):
         """
@@ -84,7 +89,7 @@ class Sensors():
 
         return 0
 
-    def changePsuState(self, on: bool):
+    def changePsuState(self, on):
         """
             args:
                 on: are we setting the sensor on
@@ -94,15 +99,10 @@ class Sensors():
                 extra habndling would be needed if there where an actual server
         """
         self.sensorState["Enabled"] = on
+        return ProtocolReturnCode.OK.value
 
-        # this is hear for emulation purposes only, in production we'd receive a message from the sensor stating that its power draw had gone to 0
-        # the reason why we react when the sensor tells us is to ensure that what is represented here is accurate to whats happening on the hardware
-        # Likely through a form of SSE
-        if on is False:
-            self.sensorState["SuppliedPower"] = 0
-
-        else:
-            self.sensorState["SuppliedPower"] = 20.0
+    def ReadSensor(self):
+        pass
 
 
 class SensorDigital(Sensors):
@@ -114,6 +114,13 @@ class SensorDigital(Sensors):
         }
         self.sensorState.update(digitalAttributes)
 
+    def ReadSensor(self, inp):
+        if inp == SensorDirection.INPUT.value:
+            return "1"  # imagine this is a call to the server
+        else:
+            # return the power being outputted
+            return self.sensorState["Enabled"]
+
 
 class SensorAnalogue(Sensors):
     def __init__(self, typeEnum, channel):
@@ -124,8 +131,12 @@ class SensorAnalogue(Sensors):
         }
         self.sensorState.update(analogueAttributes)
 
-    def ReadPowerConsumption(self):
-        pass
+    def ReadSensor(self, inp):
+        if inp == SensorDirection.INPUT.value:
+            return "000F999B"  # imagine this is a call to the server
+        else:
+            # return the power being outputted
+            return self.sensorState["SuppliedPower"]
 
 
 # ---------------------------------------------------------------------------------
@@ -136,20 +147,32 @@ class SensorAnalogue(Sensors):
 
 class Module():
     def SensorFactory(self, sensorDict):
-        sensors = []
+        anasensors = []
+        digisensors = []
         for key, val in sensorDict.items():
             print(f"Init sensor: {key}, type: {val[1]} on channel {val[0]}")
 
             if val[1] == SensorType.ANA:
-                sensors.append(SensorAnalogue(val[1], val[0]))
+                anasensors.append(SensorAnalogue(val[1], val[0]))
             else:
-                sensors.append(SensorDigital(val[1], val[0]))
+                digisensors.append(SensorDigital(val[1], val[0]))
 
-        return sensors
+        return (anasensors, digisensors)
 
     def __init__(self, sensorDict):
         self.sensors = self.SensorFactory(sensorDict)
-        self.powerState = 0  # is the controller powered on
+        self.powerState = 0  # is the controller powered on only exists as part of the emulation
+
+    def returnModulePowerState(self):
+        if self.powerState == 0:
+            return "OFF"
+
+        else:
+            return "PWR"
+
+    def setModulePowerState(self, PWR):
+        print(PWR)
+        self.powerState = PWR
 
     def sendEvent(self, sensor, msg):
         """
@@ -173,38 +196,62 @@ class Module():
             # due to arbirary size of Sequence number we struggle to do proper slicing by index
             inpSplit = inp.split()
 
-            # as the regex filters out an missing ^ i can ignore it when slicing
-            opcode = inp[1]
+            opcode = inp[1]  # Opcode is always here
             seqNum = inpSplit[1]
-            if opcode == ProtocolCommands.PUS:
+            if opcode == ProtocolCommands.ECHO.value:
+                print(f"^E {seqNum} {ProtocolReturnCode.OK.value} {
+                      self.returnModulePowerState()}")
+            elif opcode == ProtocolCommands.PUS.value:
+                self.setModulePowerState(inpSplit[2])
+                print(f"^P {seqNum} {ProtocolReturnCode.OK.value}")
 
+            elif opcode == ProtocolCommands.INPUT.value:
                 # process and slice the incoming sensor command into output type and channel
-            sensorType = inpSplit[2][0]
-            sensorDirection = inpSplit[2][1]
-            sensorChannel = inpSplit[2][2:]
-
-            print(f"""Received opcode {opcode}
-    Received SS {seqNum}
-    Received x {sensorType}
-    Received d {sensorDirection}
-    Received nn {sensorChannel}""")
+                sensorType = inpSplit[2][0]
+                sensorDirection = inpSplit[2][1]
+                sensorChannel = int(inpSplit[2][2:], 16)
+                if sensorType == SensorType.ANA.value:
+                    for i in self.sensors[0]:
+                        if i.channel == sensorChannel:
+                            print(f"^I {seqNum} {ProtocolReturnCode.OK.value} {sensorType}{
+                                  sensorDirection}{sensorChannel} {i.ReadSensor(sensorDirection)}")
+                elif sensorType == SensorType.DIGI.value:
+                    for i in self.sensors[1]:
+                        if i.channel == sensorChannel:
+                            print(f"^I {seqNum} {ProtocolReturnCode.OK.value} {sensorType}{
+                                  sensorDirection}{sensorChannel} {i.ReadSensor(sensorDirection)}")
+            elif opcode == ProtocolCommands.OUTPUT.value:
+                # process and slice the incoming sensor command into output type and channel
+                sensorType = inpSplit[2][0]
+                sensorDirection = inpSplit[2][1]
+                sensorChannel = int(inpSplit[2][2:], 16)
+                print(sensorChannel)
+                if sensorType == SensorType.ANA.value:
+                    for i in self.sensors[0]:
+                        if i.channel == sensorChannel:
+                            print(f"^O {seqNum} {
+                                  i.ReadSensor(sensorDirection)}")
+                elif sensorType == SensorType.DIGI.value:
+                    for i in self.sensors[1]:
+                        if i.channel == sensorChannel:
+                            print(f"^O {seqNum} {
+                                  i.changePsuState(int(inpSplit[3]))}")
 
         else:
             # this feels correct as is it assumed that none of the input was correct therefore no SS etc??
-            print("ERR")
+            print("^ERR")
 
 
+# dictionary goes: name/alias, relative channel (IE: analogue channel 1), sensortype
 sensorDict = {
     "Digi0": [0, SensorType.DIGI],
     "Digi1": [1, SensorType.DIGI],
-    "Ana0": [2, SensorType.ANA],
-    "Ana1": [3, SensorType.ANA]
+    "Ana0": [0, SensorType.ANA],
+    "Ana1": [1, SensorType.ANA]
 
 }
 x = Module(sensorDict)
 
-
-x.receiveEvent("^O 2A AO04 8C21\n")
 
 while (True):
     # this ensures the \n is properly received
