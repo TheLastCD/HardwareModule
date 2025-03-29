@@ -1,4 +1,4 @@
-##[pylyzer] failed /users/charlie/git/hardwaremodule/main.py 1743241867 2963
+##[pylyzer] failed /users/charlie/git/hardwaremodule/main.py 1743245452 4727
 .re: Never
 
 .___v_desugar_1: Never
@@ -7,11 +7,6 @@
 .SensorType <: Never
 .SensorType.DIGI: {0}
 .SensorType.ANA: {1}
-
-.IO: ClassType
-.IO <: Never
-.IO.INP: {0}
-.IO.OUT: {1}
 
 .ProtocolCommands: ClassType
 .ProtocolCommands <: Never
@@ -26,36 +21,38 @@
 .ProtocolReturnCode.ERROR: {"ERR"}
 .ProtocolReturnCode.RANGE: {"RNG"}
 
-
 .Sensors: ClassType
 .Sensors.sensorType: Never
-.Sensors.IO: Never
+.Sensors.sensorState: Never
 .Sensors.channel: Never
-.Sensors.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.Sensors
+.Sensors.__call__: (typeEnum: Obj, channel: Obj) -> main.Sensors
 .Sensors.returnChannel: (self: main.Sensors) -> Never
-.Sensors.returnIO: (self: main.Sensors) -> Never
 .Sensors.returnSensorType: (self: main.Sensors) -> {main.SensorType}
+.Sensors.returnSensorState: (self: main.Sensors) -> {0}
+.Sensors.changePsuState: (self: main.Sensors, on: Bool) -> NoneType
 
-.SensorInput: ClassType
+.SensorDigital: ClassType
 main = pyimport "main"
-.SensorInput <: .Sensors
-.SensorInput.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.SensorInput
-.SensorInput.returnSensorState: (self: main.SensorInput) -> NoneType
+.SensorDigital <: .Sensors
+.SensorDigital.__call__: (typeEnum: Obj, channel: Obj) -> main.SensorDigital
 
-.SensorOutput: ClassType
-.SensorOutput <: .Sensors
-.SensorOutput.__call__: (typeEnum: Obj, io: Obj, channel: Obj) -> main.SensorOutput
-.SensorOutput.changePsuState: (self: main.SensorOutput, on: Bool) -> NoneType
-.SensorOutput.ReadPowerConsumption: (self: main.SensorOutput) -> NoneType
+.SensorAnalogue: ClassType
+.SensorAnalogue <: .Sensors
+.SensorAnalogue.__call__: (typeEnum: Obj, channel: Obj) -> main.SensorAnalogue
+.SensorAnalogue.ReadPowerConsumption: (self: main.SensorAnalogue) -> NoneType
 
 .Module: ClassType
+.Module.sensors: Never
 .Module.__call__: (sensorDict: Obj) -> main.Module
-.Module.SensorFactory: (self: main.Module, Dict: global::Iterable(global::Indexable(Obj, Never))) -> NoneType
+.Module.SensorFactory: (self: main.Module, sensorDict: Structural({.items = (self: Obj) -> global::Iterable(global::Tuple([Obj, Never]))})) -> Never
 .Module.ResponseGenerator: (self: main.Module) -> NoneType
 
-.sensorDict: global::Dict!({{"Ana0"}: {2}, {"Digi1"}: {1}, {"Digi0"}: {0}, {"Ana1"}: {3}})
+.sensorDict: global::Dict!({{"Ana0"}: global::List!({2, 1}, 2), {"Digi1"}: global::List!({0, 1}, 2), {"Digi0"}: global::List!({0}, 2), {"Ana1"}: global::List!({3, 1}, 2)})
+.x: .Module
 .ProtocolHandler: ClassType
 .ProtocolHandler.__call__: () -> main.ProtocolHandler
 .ProtocolHandler.ReadInput: (self: main.ProtocolHandler) -> Never
 .ProtocolHandler.ProcessInput: (self: main.ProtocolHandler, inp: Obj) -> Never
+
+lHandler.ProcessInput: (self: main.ProtocolHandler, inp: Obj) -> Never
 

@@ -1,16 +1,24 @@
+# ---------------------------------------------------------------------------------
+#
+#   imports
+#
+# ---------------------------------------------------------------------------------
+
+
 import re
 
 from enum import Enum
+
+# ---------------------------------------------------------------------------------
+#
+#   Enums
+#
+# ---------------------------------------------------------------------------------
 
 
 class SensorType(Enum):
     DIGI = 0
     ANA = 1
-
-
-class IO(Enum):
-    INP = 0
-    OUT = 1
 
 
 class ProtocolCommands(Enum):
@@ -29,10 +37,11 @@ class ProtocolReturnCode(Enum):
     RANGE = "RNG"
 
 
-"""
-
-
-"""
+# ---------------------------------------------------------------------------------
+#
+#   Sensor Emulation
+#
+# ---------------------------------------------------------------------------------
 
 
 class Sensors():
@@ -46,85 +55,113 @@ class Sensors():
 
     """
 
-    def __init__(self, typeEnum, io, channel):
+    def __init__(self, typeEnum, channel):
         """
             args:
                 typeEnum:   Enum defining the type of sensor, either digital or analogue
-                io:         define whether sensor is on an input or an output
                 Channel:    which channel is the sensor on, in real world usecase this would likely be a gpio pin or more specific hardware address
         """
 
         # default state of the sensors that are agnostic to what type the sensor is
-        self.sensorSate = {"Enabled": 0,
-                           "SuppliedPower": 0,
-                           }
+        self.sensorState = {"Enabled": 0,
+                            "SuppliedPower": 0,
+                            }
         self.sensorType = typeEnum
-        self.IO = io
         self.channel = channel
 
     # Simple Returns for REST like structure
     def returnChannel(self):
         return self.channel
 
-    def returnIO(self):
-        return self.IO
-
     def returnSensorType(self):
         return SensorType
-
-
-class SensorInput(Sensors):
-    def __init__(self, typeEnum, io, channel):
-        super().__init__(typeEnum, io, channel)
 
     def returnSensorState(self):
         """
             notes: depending on return case could either be digi or ana
 
         """
-        pass
 
-
-class SensorOutput(Sensors):
-    def __init__(self, typeEnum, io, channel):
-        super().__init__(typeEnum, io, channel)
+        return 0
 
     def changePsuState(self, on: bool):
         """
             args:
                 on: are we setting the sensor on
+
+
+            notes:
+                we can assume
         """
-        pass
+        self.sensorState["Enabled"] = on
+
+        # this is hear for emulation purposes only, in production we'd receive a message from the sensor stating that its power draw had gone to 0
+        # the reason why we react when the sensor tells us is to ensure that what is represented here is accurate to whats happening on the hardware
+        if on is False:
+            self.sensorState["SuppliedPower"] = 0
+
+        else:
+            self.sensorState["SuppliedPower"] = 20.0
+
+
+class SensorDigital(Sensors):
+    def __init__(self, typeEnum, channel):
+        super().__init__(typeEnum, channel)
+        digitalAttributes = {
+            "LightSensor": 0,
+            "MotionSensor": 0,
+        }
+        self.sensorState.update(digitalAttributes)
+
+
+class SensorAnalogue(Sensors):
+    def __init__(self, typeEnum, channel):
+        super().__init__(typeEnum, channel)
+        analogueAttributes = {
+            "LightSensorPower": 0,
+            "LightSensorDistance": 0,
+        }
+        self.sensorState.update(analogueAttributes)
 
     def ReadPowerConsumption(self):
         pass
 
 
+# ---------------------------------------------------------------------------------
+#
+#   Microcontroller Module Emulation
+#
+# ---------------------------------------------------------------------------------
+
 class Module():
-    def SensorFactory(self, Dict):
-        for key, val in Dict:
-            print(key, val)
+    def SensorFactory(self, sensorDict):
+        sensors = []
+        for key, val in sensorDict.items():
+            print(f"Init sensor: {key}, type: {val[1]} on channel {val[0]}")
+
+            if val[1] == SensorType.ANA:
+                sensors.append(SensorAnalogue(val[1], val[0]))
+            else:
+                sensors.append(SensorDigital(val[1], val[0]))
+
+        return sensors
 
     def __init__(self, sensorDict):
-        self.SensorFactory(sensorDict)
+        self.sensors = self.SensorFactory(sensorDict)
 
     def ResponseGenerator(self):
 
         pass
 
 
-# x = SensorInput(SensorType.DIGI, IO.INP, 1)
-# print(x.channel)
-
-
 sensorDict = {
-    "Digi0": 0,
-    "Digi1": 1,
-    "Ana0": 2,
-    "Ana1": 3,
-
+    "Digi0": [0, SensorType.DIGI],
+    "Digi1": [1, SensorType.DIGI],
+    "Ana0": [2, SensorType.ANA],
+    "Ana1": [3, SensorType.ANA]
 
 }
+x = Module(sensorDict)
 
 
 class ProtocolHandler():
