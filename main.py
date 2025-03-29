@@ -91,12 +91,13 @@ class Sensors():
 
 
             notes:
-                we can assume
+                extra habndling would be needed if there where an actual server
         """
         self.sensorState["Enabled"] = on
 
         # this is hear for emulation purposes only, in production we'd receive a message from the sensor stating that its power draw had gone to 0
         # the reason why we react when the sensor tells us is to ensure that what is represented here is accurate to whats happening on the hardware
+        # Likely through a form of SSE
         if on is False:
             self.sensorState["SuppliedPower"] = 0
 
@@ -149,9 +150,28 @@ class Module():
     def __init__(self, sensorDict):
         self.sensors = self.SensorFactory(sensorDict)
 
-    def ResponseGenerator(self):
+    def sendEvent(self, sensor, msg):
+        """
+            args:
+                sensor: sensor object to send the command to
+                msg: any variables if applicable to pass on
+            desc:
+                Mimics the sending of an event to the sensor
+        """
 
-        pass
+        return 0
+
+    def receiveEvent(self, inp):
+        """
+            args:
+                inp: the command received to act on
+        """
+        pattern = r"^\^O\s(?:\w+\s)*\w+\n$"  # simple regex to filter out incorrect commands
+
+        if re.fullmatch(pattern, inp):
+            print(inp)
+        else:
+            print("Fail")
 
 
 sensorDict = {
@@ -164,18 +184,4 @@ sensorDict = {
 x = Module(sensorDict)
 
 
-class ProtocolHandler():
-    def __init__(self):
-        pass
-
-    def ReadInput(self):
-        inp = input("> ")
-        return inp
-
-    def ProcessInput(self, inp):
-        pattern = r"\^O\s\w+\s\\n"
-
-        if re.fullmatch(pattern, inp):
-            print(inp)
-        else:
-            return False
+x.receiveEvent("^O 2A AO04 8C21\n")
