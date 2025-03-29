@@ -18,4 +18,8 @@ Challenges:
 	it's hard when you don't have the specific unit to work with
 	the hardware informs your software and it's very useful to be able to prod it
 	also the physical hardware is good for orienting yourself, conflating ana out with an ana sensor for instance
-	
+
+
+structure:
+	as it stands, i'm emulating the state of the sensors and module, with no hooks to pass it through so we can work it out
+

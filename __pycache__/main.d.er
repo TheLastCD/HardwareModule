@@ -1,4 +1,4 @@
-##[pylyzer] failed /users/charlie/git/hardwaremodule/main.py 1743245452 4727
+##[pylyzer] failed /users/charlie/git/hardwaremodule/main.py 1743256414 6063
 .re: Never
 
 .___v_desugar_1: Never
@@ -45,13 +45,18 @@ main = pyimport "main"
 .Module.sensors: Never
 .Module.__call__: (sensorDict: Obj) -> main.Module
 .Module.SensorFactory: (self: main.Module, sensorDict: Structural({.items = (self: Obj) -> global::Iterable(global::Tuple([Obj, Never]))})) -> Never
-.Module.ResponseGenerator: (self: main.Module) -> NoneType
+.Module.sendEvent: (self: main.Module, sensor: Obj, msg: Obj) -> {0}
+.Module.receiveEvent: (self: main.Module, inp: Str) -> NoneType
 
 .sensorDict: global::Dict!({{"Ana0"}: global::List!({2, 1}, 2), {"Digi1"}: global::List!({0, 1}, 2), {"Digi0"}: global::List!({0}, 2), {"Ana1"}: global::List!({3, 1}, 2)})
 .x: .Module
-.ProtocolHandler: ClassType
-.ProtocolHandler.__call__: () -> main.ProtocolHandler
-.ProtocolHandler.ReadInput: (self: main.ProtocolHandler) -> Never
+
+
+.cli: Str
+
+
+
+olHandler.ReadInput: (self: main.ProtocolHandler) -> Never
 .ProtocolHandler.ProcessInput: (self: main.ProtocolHandler, inp: Obj) -> Never
 
 lHandler.ProcessInput: (self: main.ProtocolHandler, inp: Obj) -> Never

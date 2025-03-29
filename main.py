@@ -166,12 +166,30 @@ class Module():
             args:
                 inp: the command received to act on
         """
-        pattern = r"^\^O\s(?:\w+\s)*\w+\n$"  # simple regex to filter out incorrect commands
+        pattern = r'^\^.*\n$'  # simple regex to filter out incorrect commands
 
         if re.fullmatch(pattern, inp):
-            print(inp)
+            # due to arbirary size of Sequence number we struggle to do proper slicing by index
+            inpSplit = inp.split()
+
+            # as the regex filters out an missing ^ i can ignore it when slicing
+            opcode = inp[1]
+            seqNum = inpSplit[1]
+
+            # process and slice the incoming sensor command into output type and channel
+            sensorType = inpSplit[2][0]
+            sensorDirection = inpSplit[2][1]
+            sensorChannel = inpSplit[2][2:]
+
+            print(f"""Received opcode {opcode}
+    Received SS {seqNum}
+    Received x {sensorType}
+    Received d {sensorDirection}
+    Received nn {sensorChannel}""")
+
         else:
-            print("Fail")
+            # this feels correct as is it assumed that none of the input was correct therefore no SS etc??
+            print("ERR")
 
 
 sensorDict = {
@@ -185,3 +203,8 @@ x = Module(sensorDict)
 
 
 x.receiveEvent("^O 2A AO04 8C21\n")
+
+while (True):
+    # this ensures the \n is properly received
+    cli = input("> ").encode('utf-8').decode('unicode_escape')
+    x.receiveEvent(cli)
