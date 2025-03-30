@@ -23,3 +23,9 @@ Challenges:
 structure:
 	as it stands, i'm emulating the state of the sensors and module, with no hooks to pass it through so we can work it out
 
+Enums:
+	built for simplifying some interaction as per usual
+
+
+
+
