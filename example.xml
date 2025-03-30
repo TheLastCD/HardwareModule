@@ -1,0 +1,6 @@
+<sensor>
+    <GPIO>1</GPIO>
+    <type>Analogue</type>
+    <relativeChannel>0</relativeChannel>
+    <notes>lorem ipsum</notes>
+</sensor>

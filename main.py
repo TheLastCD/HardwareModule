@@ -178,32 +178,35 @@ class Module():
         pattern = r'^\^.*\n$'  # simple regex to filter out incorrect commands only covers the ^ and \n
 
         if re.fullmatch(pattern, inp):
-            # due to arbirary size of Sequence number we struggle to do proper slicing by index
-            inpSplit = inp.split()
+            try:
+                # due to arbirary size of Sequence number we struggle to do proper slicing by index
+                inpSplit = inp.split()
 
-            opcode = inp[1]  # Opcode is always here
-            seqNum = inpSplit[1]
-            if opcode == ProtocolCommands.ECHO.value:
-                self.EchoHandler(seqNum)
-            elif opcode == ProtocolCommands.PUS.value:
-                self.PowerUpHandler(seqNum, inpSplit[2])
-            else:
-                # process and slice the incoming sensor command into chunks can process
-                sensorType = inpSplit[2][0]
-                sensorDirection = inpSplit[2][1]
-                sensorChannel = int(inpSplit[2][2:], 16)
-                try:
+                opcode = inp[1]  # Opcode is always here
+                seqNum = inpSplit[1]
+                if opcode == ProtocolCommands.ECHO.value:
+                    self.EchoHandler(seqNum)
+                elif opcode == ProtocolCommands.PUS.value:
+                    self.PowerUpHandler(seqNum, inpSplit[2])
+                else:
+                    # process and slice the incoming sensor command into chunks can process
+                    sensorType = inpSplit[2][0]
+                    sensorDirection = inpSplit[2][1]
                     sensorChannel = int(inpSplit[2][2:], 16)
-                except ValueError:
-                    self.sendError(seqNum)
-                    return
-                if opcode == ProtocolCommands.INPUT.value:
-                    self.InputHandler(seqNum,
-                                      sensorType, sensorChannel, sensorDirection)
+                    try:
+                        sensorChannel = int(inpSplit[2][2:], 16)
+                    except ValueError:
+                        self.sendError(opcode=opcode, seqNum=seqNum)
+                        return
+                    if opcode == ProtocolCommands.INPUT.value:
+                        self.InputHandler(seqNum,
+                                          sensorType, sensorChannel, sensorDirection)
 
-                elif opcode == ProtocolCommands.OUTPUT.value:
-                    self.OutputHandler(
-                        seqNum, sensorType, sensorChannel, sensorDirection, int(inpSplit[3]))
+                    elif opcode == ProtocolCommands.OUTPUT.value:
+                        self.OutputHandler(
+                            seqNum, sensorType, sensorChannel, sensorDirection, int(inpSplit[3], 16))
+            except IndexError:
+                self.SendError(opcode=opcode, seqNum=seqNum)
 
         else:
             # i'm assuming that given how the regex works there maybe no sequencenumber
@@ -215,45 +218,47 @@ class Module():
     # -------------------------------------------------------
 
     def EchoHandler(self, seqNum):
-        print(f"^E {seqNum} {ProtocolReturnCode.OK.value} {
-              self.returnModulePowerState()}")
+        print(rf"^E {seqNum} {ProtocolReturnCode.OK.value} {
+              self.returnModulePowerState()}\n")
 
     def PowerUpHandler(self, seqNum, comm):
         self.setModulePowerState(comm)
-        print(f"^P {seqNum} {ProtocolReturnCode.OK.value}")
+        print(rf"^P {seqNum} {ProtocolReturnCode.OK.value}\n")
 
     def InputHandler(self, seqNum, sensorType, sensorChannel, sensorDirection):
         if sensorType == SensorType.ANA.value:
             for i in self.sensors[0]:
                 if i.channel == sensorChannel:
-                    print(f"^I {seqNum} {ProtocolReturnCode.OK.value} {sensorType}{
-                        sensorDirection}{sensorChannel} {i.ReadSensor(sensorDirection)}")
+                    print(rf"^I {seqNum} {ProtocolReturnCode.OK.value} {sensorType}{
+                        sensorDirection}{sensorChannel} {i.ReadSensor(sensorDirection)}\n")
         elif sensorType == SensorType.DIGI.value:
             for i in self.sensors[1]:
                 if i.channel == sensorChannel:
                     print(f"^I {seqNum} {ProtocolReturnCode.OK.value} {sensorType}{
-                          sensorDirection}{sensorChannel} {i.ReadSensor(sensorDirection)}")
+                          sensorDirection}{sensorChannel} {i.ReadSensor(sensorDirection)}\n")
 
     def OutputHandler(self, seqNum, sensorType, sensorChannel, sensorDirection, comm):
         if sensorType == SensorType.ANA.value:
             for i in self.sensors[0]:
                 if i.channel == sensorChannel:
-                    print(f"^O {seqNum} {
-                        i.ReadSensor(sensorDirection)}")
+                    print(rf"^O {seqNum} {i.ReadSensor(sensorDirection)}\n")
+                    return
+
         elif sensorType == SensorType.DIGI.value:
             for i in self.sensors[1]:
                 if i.channel == sensorChannel:
-                    print(f"^O {seqNum} {
-                        i.changePsuState(comm)}")
+                    print(rf"^O {seqNum} {i.changePsuState(comm)}\n")
+                    return
+        self.SendError(opcode="^O", seqNum=seqNum,
+                       retEnum=ProtocolReturnCode.RANGE.value)
     # -------------------------------------------------------
     #
     #   Error handling
     #
     # -------------------------------------------------------
 
-    def SendError(self, seqNum=None):
-        error_code = ProtocolReturnCode.INVALID_COMMAND.value
-        print(f"^ERR {seqNum if seqNum else 'NULL'} {error_code}")
+    def SendError(self, opcode="^ERR", seqNum=None, retEnum=ProtocolReturnCode.ERROR.value):
+        print(rf"{opcode} {seqNum if seqNum else 'NULL'} {retEnum}\n")
 
 
 # dictionary goes: name/alias, relative channel (IE: analogue channel 1), sensortype
